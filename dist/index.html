@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Mumbo App</title>
+  <meta charset="utf-8">
+  <link rel="icon" href="favicon.png" type="image/png" sizes="64x64">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+</head>
+
+<body>
+
+  <div class="jumbotron text-center">
+    <h1>Mumbo App</h1>
+    <p>Run some stuff?</p>
+  </div>
+
+  <div class="container">
+    <div class="row m-5">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-4 text-center">
+        <button class="btn btn-danger" onclick="runNoop()">Run Noop?</button>
+      </div>
+      <div class="col-sm-4 text-center">
+        <button class="btn btn-danger" onclick="runCommand()">Run Command?</button>
+      </div>
+      <div class="col-sm-2"></div>
+
+    </div>
+    <div class="row m-5">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-4 text-center">
+        <button class="btn btn-danger" onclick="runLevel1Command()">Run Level 1?</button>
+      </div>
+      <div class="col-sm-2"></div>
+    </div>
+
+  </div>
+
+  <script>
+
+    var ws;
+
+    function runCommand() {
+      console.log("run command.");
+      ws.send(JSON.stringify({
+        type: "COMMAND",
+        executable: "test.bat",
+        args: []
+      }));
+    }
+
+    function runLevel1Command() {
+      console.log("run level 1");
+      ws.send(JSON.stringify({
+        type: "COMMAND",
+        executable: "level1/level1.bat"
+      }));
+    }
+
+    function runNoop() {
+      console.log("run command.");
+      ws.send(JSON.stringify({
+        type: "NOOP"
+      }));
+    }
+
+    (function () {
+      // todo make this part dynamic...
+      ws = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/ws");
+
+      ws.onmessage = function (message) {
+        console.log("received message", message);
+      }
+    })();
+  </script>
+</body>
+
+</html>
