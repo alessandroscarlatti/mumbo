@@ -5,7 +5,7 @@ const BANNER = String.raw`
 |_|  |_|\_,_|_|_|_|_.__/\___/\__/|___/ 
 `                                      
 console.log(BANNER);                   
-console.log("Starting server with args:", process.argv);
+console.log(`Starting server PID ${process.pid} with args: ${process.argv}`);
 
 const os = require("os");
 const fs = require('fs');
@@ -21,16 +21,23 @@ const SERVER_KEY = Math.random().toString(36).substring(2, 15) + Math.random().t
 
 //init Express
 var app = express();
-app.use(`/${SERVER_KEY}`, express.static(__dirname))
+app.use(`/static`, express.static(__dirname))
+
+app.get("/", function(req, res) {
+    if (req.query.k === SERVER_KEY) 
+        res.sendFile(path.join(__dirname, "index.html"));
+    else
+        res.sendStatus(401);
+});
 
 // start on a random open port
 var server = app.listen(0);
 server.on("listening", function () {
     const hostname = os.hostname();
     const port = server.address().port;
-    const url = `http://${hostname}:${port}/${SERVER_KEY}`;
+    const url = `http://${hostname}:${port}?k=${SERVER_KEY}`;
     console.log(`Server started at ${url} on ${new Date()}`);
-    spawn("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe", [`--app=${url}`], {
+    spawn("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe", ["--window-size=500,500", `--app=${url}`], {
         detached: true  // we don't want chrome to crash if our app crashes!
     })
 })
@@ -138,9 +145,16 @@ function performShellCommandInNewShell(executablePath, args, ws) {
 }
 
 //init Websocket ws and handle incoming connect requests
-const wss = new SocketServer({ server, path: "/ws" });
+const wss = new SocketServer({ server, path: `/ws/${SERVER_KEY}` });
 var clients = [];
 wss.on('connection', function connection(ws, req) {
+
+    // reject unauthorized requests
+    // if (req.query.k !== SERVER_KEY) {
+    //     ws.terminate();
+    //     return;
+    // }
+
     console.log("Connected to client at " + req.connection.remoteAddress);
     clients.push(1);
 

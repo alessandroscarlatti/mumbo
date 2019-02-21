@@ -1,2 +1,2 @@
 echo hello world
-ping localhost -n 5
+ping localhost -n 30
