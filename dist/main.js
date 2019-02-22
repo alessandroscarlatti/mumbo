@@ -147,13 +147,17 @@ function performShellCommandInNewShell(executablePath, args, ws) {
 //init Websocket ws and handle incoming connect requests
 const wss = new SocketServer({ server, path: `/ws/${SERVER_KEY}` });
 var clients = [];
-wss.on('connection', function connection(ws, req) {
+var shutdownTimer;
 
-    // reject unauthorized requests
-    // if (req.query.k !== SERVER_KEY) {
-    //     ws.terminate();
-    //     return;
-    // }
+function optionallyShutdownServer() {
+    // need to check if canceled
+    if (clients.length === 0) {
+        console.log("No Clients connected. Shutting down now.");
+        process.exit(0);
+    }
+}
+
+wss.on('connection', function connection(ws, req) {
 
     console.log("Connected to client at " + req.connection.remoteAddress);
     clients.push(1);
@@ -167,10 +171,10 @@ wss.on('connection', function connection(ws, req) {
     ws.on('close', function (code, reason) {
         console.log(`Connection closed with ${req.connection.remoteAddress}. Code: ${code}`);
         clients.pop();
-        if (clients.length === 0) {
-            console.log("No Clients connected. Shutting down now.");
-            process.exit(0);
-        }
+
+        // if any previously closed connection is counting down, cancel it.
+        clearTimeout(shutdownTimer);
+        shutdownTimer = setTimeout(optionallyShutdownServer, 1000);
     });
 
     //on connect message
